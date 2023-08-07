@@ -1,0 +1,53 @@
+{
+  "name": "pm2-discord",
+  "version": "1.0.0",
+  "description": "A PM2 module to emit events to discord",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elara-bots/pm2"
+  },
+  "keywords": [
+    "pm2",
+    "discord"
+  ],
+  "author": "SUPERCHIEFYT (Elara-Discord-Bots)",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/elara-bots/pm2/blob/master/LICENSE"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/elara-bots/pm2/issues"
+  },
+  "homepage": "https://github.com/elara-bots/pm2",
+  "dependencies": {
+    "@elara-services/fetch": "^2.0.1",
+    "@elara-services/sdk": "^1.0.3",
+    "pm2": "^5.3.0",
+    "pmx": "^1.6.7",
+    "strip-ansi": "^7.1.0"
+  },
+  "config": {
+    "discord_url": null,
+    "process_name": null,
+    "log": true,
+    "error": false,
+    "kill": true,
+    "exception": true,
+    "restart": true,
+    "delete": true,
+    "stop": true,
+    "restart overlimit": true,
+    "exit": true,
+    "start": true,
+    "online": true,
+    "buffer": true,
+    "buffer_seconds": 1,
+    "queue_max": 100
+  }
+}
