@@ -33,7 +33,7 @@ let suppressed = {
   date: new Date().getTime()
 };
 const colors = {
-  info: 0x64acf3,
+  log: 0x64acf3,
   error: 0xFF0000,
   exception: 0xFF0000,
   kill: 0xFF0000,
@@ -41,7 +41,7 @@ const colors = {
 }
 const cdn = (id, ending = "png") => `https://cdn.discordapp.com/emojis/${id}.${ending}`;
 const avatars = {
-  info: cdn(`313956277808005120`),
+  log: cdn(`313956277808005120`),
   error: cdn(`313956276893646850`),
   kill: cdn(`313956277237710868`),
   suppressed: cdn(`313956277237710868`),
