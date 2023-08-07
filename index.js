@@ -130,7 +130,7 @@ function processQueue() {
       suppressed.isSuppressed = true;
       suppressed.date = new Date().getTime();
       sendToDiscord({
-        name: 'pm2-discord',
+        name: 'elara-bots/pm2-discord',
         event: 'suppressed',
         description: 'Messages are being suppressed due to rate limiting.'
       });
@@ -151,7 +151,7 @@ function processQueue() {
 
 function createMessage(data, eventName, altDescription) {
   // we don't want to output pm2-discord's logs
-  if (data.process.name === 'pm2-discord' || data.process_name === "elara-bots/pm2-discord") {
+  if (data.process.name === 'pm2-discord' || data.process_name === "elara-bots/pm2-discord-discord") {
     return;
   }
   // if a specific process name was specified then we check to make sure only 
