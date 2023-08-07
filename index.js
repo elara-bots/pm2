@@ -67,7 +67,7 @@ async function sendToDiscord(message) {
     description = `\`\`\`js\n${message.description}\`\`\``;
   }
 
-  return fetch(conf.discord_url, "POST")
+  return await fetch(conf.discord_url, "POST")
     .body({
       embeds: [
         {
@@ -138,7 +138,7 @@ function processQueue() {
       suppressed.isSuppressed = true;
       suppressed.date = new Date().getTime();
       sendToDiscord({
-        name: 'elara-bots/pm2-discord',
+        name: 'pm2-discord',
         event: 'suppressed',
         description: 'Messages are being suppressed due to rate limiting.'
       });
@@ -159,7 +159,7 @@ function processQueue() {
 
 function createMessage(data, eventName, altDescription) {
   // we don't want to output pm2-discord's logs
-  if (data.process.name === 'pm2-discord' || data.process_name === "elara-bots/pm2-discord-discord") {
+  if (data.process.name === 'pm2-discord') {
     return;
   }
   // if a specific process name was specified then we check to make sure only 
@@ -222,8 +222,7 @@ pm2.launchBus(function (err, bus) {
     if (!conf[data.event]) {
       return;
     }
-    let msg = 'The following event has occured on the PM2 process ' + data.process.name + ': ' + data.event;
-    createMessage(data, data.event, msg);
+    createMessage(data, data.event, `The following event has occured on the PM2 process ${data.process.name}: ${data.event}`);
   });
 
   // Start the message processing
