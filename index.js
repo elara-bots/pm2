@@ -4,7 +4,15 @@ const { fetch } = require("@elara-services/fetch");
 const sdk = new (require("@elara-services/sdk").SDK)();
 const pm2 = require("pm2");
 const pmx = require("pmx");
-const stripAnsi = require("strip-ansi");
+
+function stripANSI(str) {
+  const pattern = [
+		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
+	].join('|');
+  const regex = new RegExp(pattern, "g");
+  return str.replace(regex, '');
+}
 
 // Get the configuration from PM2
 const conf = pmx.initModule();
@@ -168,7 +176,7 @@ function createMessage(data, eventName, altDescription) {
   messages.push({
     name: data.process.name,
     event: eventName,
-    description: stripAnsi(msg),
+    description: stripANSI(msg),
     timestamp: Math.floor(Date.now() / 1000),
   });
 }
