@@ -168,7 +168,7 @@ function createMessage(data, eventName, altDescription) {
   messages.push({
     name: data.process.name,
     event: eventName,
-    description: stripAnsi.default(msg),
+    description: stripAnsi(msg),
     timestamp: Math.floor(Date.now() / 1000),
   });
 }

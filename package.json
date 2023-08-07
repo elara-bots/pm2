@@ -30,7 +30,7 @@
     "@elara-services/sdk": "^1.0.3",
     "pm2": "^5.3.0",
     "pmx": "^1.6.7",
-    "strip-ansi": "^7.1.0"
+    "strip-ansi": "^7.0.0"
   },
   "config": {
     "discord_url": null,
