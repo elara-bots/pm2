@@ -1,6 +1,7 @@
 'use strict';
 
 const { fetch } = require("@elara-services/fetch");
+const { proper } = require("@elara-services/utils");
 const sdk = new (require("@elara-services/sdk").SDK)();
 const pm2 = require("pm2");
 const pmx = require("pmx");
@@ -79,15 +80,15 @@ async function sendToDiscord(message) {
   return await fetch(conf.discord_url, "POST")
     .query("wait", true)
     .body({
-      username: message.name,
+      username: `[${proper(message.event)}]: ${message.name}`,
       avatar_url: avatars[message.event] || "",
       embeds: [
         {
           author: { name: `PM2 Logs`, icon_url: `https://cdn.discordapp.com/emojis/815679520296271943.png` },
-          title: `Process: \`${message.name}\``,
+          title: proper(message.event),
           description,
           color: colors[message.event] || 0x64acf3,
-          footer: { text: `Event: ${message.event}` }
+          footer: { text: `Process: ${message.name}` }
         }
       ]
     }, "json")
