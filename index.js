@@ -42,7 +42,7 @@ const colors = {
 /**
  * Function to send events to the Discord Webhook.
  * @param {object} message 
- * @param {string} message.process_name
+ * @param {string} message.name
  * @param {string} message.event
  * @param {string} message.description
  * @param {number} [message.timestamp]
@@ -68,11 +68,12 @@ async function sendToDiscord(message) {
   }
 
   return await fetch(conf.discord_url, "POST")
+    .query("wait", true)
     .body({
       embeds: [
         {
           author: { name: `PM2 Logs`, icon_url: `https://cdn.discordapp.com/emojis/815679520296271943.png` },
-          title: `Process: \`${message.process_name}\``,
+          title: `Process: \`${message.name}\``,
           description,
           color: colors[message.event] || 0x64acf3,
           footer: { text: `Event: ${message.event}` }
@@ -81,7 +82,7 @@ async function sendToDiscord(message) {
     }, "json")
     .send()
     .then((res) => {
-      if (res.statusCode !== 200) {
+      if (![200, 204].includes(res.statusCode)) {
         return console.error(`An error occured during the request for the Discord Webhook.`, res);
       }
     })
