@@ -45,7 +45,7 @@
     "restart overlimit": true,
     "exit": true,
     "start": true,
-    "online": true,
+    "online": false,
     "buffer": true,
     "buffer_seconds": 1,
     "queue_max": 100
