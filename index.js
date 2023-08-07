@@ -1,18 +1,43 @@
 'use strict';
 
 const { fetch } = require("@elara-services/fetch");
-const { proper } = require("@elara-services/utils");
 const sdk = new (require("@elara-services/sdk").SDK)();
 const pm2 = require("pm2");
 const pmx = require("pmx");
 
 function stripANSI(str) {
   const pattern = [
-		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
-	].join('|');
+    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+    '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
+  ].join('|');
   const regex = new RegExp(pattern, "g");
   return str.replace(regex, '');
+}
+/**
+ * @param {string} str 
+ * @returns {string}
+ */
+function proper(name, splitBy) {
+  if (name.startsWith("us-")) {
+    const split = name.split("-")[1];
+    return `US ${split.slice(0, 1).toUpperCase() + `${split.slice(1, split.length).toLowerCase()}`}`;
+  }
+  const str = `${name.slice(0, 1).toUpperCase()}${name.slice(1, name.length).toLowerCase()}`,
+    by = (n) =>
+      str
+        .split(n)
+        .map((c) => `${c.slice(0, 1).toUpperCase()}${c.slice(1, c.length).toLowerCase()}`)
+        .join(" ");
+  if (str.includes("_")) {
+    return by("_");
+  }
+  if (str.includes(".")) {
+    return by(".");
+  }
+  if (splitBy && str.includes(splitBy)) {
+    return by(splitBy);
+  }
+  return str;
 }
 
 // Get the configuration from PM2
@@ -119,7 +144,7 @@ function bufferMessage() {
   // timestamp so they can be buffered together into a single request
   while (
     messages.length && (messages[0].timestamp >= nextMessage.timestamp &&
-    messages[0].timestamp < (nextMessage.timestamp + conf.buffer_seconds)) &&
+      messages[0].timestamp < (nextMessage.timestamp + conf.buffer_seconds)) &&
     messages[0].event === nextMessage.event
   ) {
 
