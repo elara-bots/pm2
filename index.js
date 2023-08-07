@@ -50,7 +50,7 @@ const colors = {
 async function sendToDiscord(message) {
 
   // If a Discord URL is not set, we do not want to continue and nofify the user that it needs to be set
-  if (!conf.discord_url || !message.description || !message.process_name || !message.event) {
+  if (!conf.discord_url) {
     return;
   }
 
