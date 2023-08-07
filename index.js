@@ -33,10 +33,19 @@ let suppressed = {
   date: new Date().getTime()
 };
 const colors = {
-  "info": 0x64acf3,
-  "error": 0xFF0000,
-  "kill": 0xFF0000,
-  "suppressed": 0x64acf3
+  info: 0x64acf3,
+  error: 0xFF0000,
+  exception: 0xFF0000,
+  kill: 0xFF0000,
+  suppressed: 0x64acf3
+}
+const cdn = (id, ending = "png") => `https://cdn.discordapp.com/emojis/${id}.${ending}`;
+const avatars = {
+  info: cdn(`313956277808005120`),
+  error: cdn(`313956276893646850`),
+  kill: cdn(`313956277237710868`),
+  suppressed: cdn(`313956277237710868`),
+  exception: cdn(`873444550692192337`)
 }
 
 /**
@@ -70,6 +79,8 @@ async function sendToDiscord(message) {
   return await fetch(conf.discord_url, "POST")
     .query("wait", true)
     .body({
+      username: message.name,
+      avatar_url: avatars[message.event] || "",
       embeds: [
         {
           author: { name: `PM2 Logs`, icon_url: `https://cdn.discordapp.com/emojis/815679520296271943.png` },
