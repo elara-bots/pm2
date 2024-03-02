@@ -4,42 +4,7 @@ const { fetch } = require("@elara-services/fetch");
 const sdk = new (require("@elara-services/sdk").SDK)();
 const pm2 = require("pm2");
 const pmx = require("pmx");
-
-function stripANSI(str) {
-  const pattern = [
-    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-    '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
-  ].join('|');
-  const regex = new RegExp(pattern, "g");
-  return str.replace(regex, '');
-}
-/**
- * @param {string} str 
- * @returns {string}
- */
-function proper(name, splitBy) {
-  if (name.startsWith("us-")) {
-    const split = name.split("-")[1];
-    return `US ${split.slice(0, 1).toUpperCase() + `${split.slice(1, split.length).toLowerCase()}`}`;
-  }
-  const str = `${name.slice(0, 1).toUpperCase()}${name.slice(1, name.length).toLowerCase()}`,
-    by = (n) =>
-      str
-        .split(n)
-        .map((c) => `${c.slice(0, 1).toUpperCase()}${c.slice(1, c.length).toLowerCase()}`)
-        .join(" ");
-  if (str.includes("_")) {
-    return by("_");
-  }
-  if (str.includes(".")) {
-    return by(".");
-  }
-  if (splitBy && str.includes(splitBy)) {
-    return by(splitBy);
-  }
-  return str;
-}
-
+const { stripANSI, proper, colors, avatars, cdn } = require("./utils");
 // Get the configuration from PM2
 const conf = pmx.initModule();
 
@@ -58,21 +23,6 @@ let suppressed = {
   isSuppressed: false,
   date: new Date().getTime()
 };
-const colors = {
-  log: 0x64acf3,
-  error: 0xFF0000,
-  exception: 0xFF0000,
-  kill: 0xFF0000,
-  suppressed: 0x64acf3
-}
-const cdn = (id, ending = "png") => `https://cdn.discordapp.com/emojis/${id}.${ending}`;
-const avatars = {
-  log: cdn(`313956277808005120`),
-  error: cdn(`313956276893646850`),
-  kill: cdn(`313956277237710868`),
-  suppressed: cdn(`313956277237710868`),
-  exception: cdn(`873444550692192337`)
-}
 
 /**
  * Function to send events to the Discord Webhook.
@@ -85,7 +35,8 @@ const avatars = {
 async function sendToDiscord(message) {
 
   // If a Discord URL is not set, we do not want to continue and nofify the user that it needs to be set
-  if (!conf.discord_url) {
+  let url = conf[`discord_${message.event.toLowerCase()}_url`] || conf.discord_url;
+  if (!url) {
     return;
   }
 
@@ -102,14 +53,14 @@ async function sendToDiscord(message) {
     description = `\`\`\`js\n${message.description}\`\`\``;
   }
 
-  return await fetch(conf.discord_url, "POST")
+  return await fetch(url, "POST")
     .query("wait", true)
     .body({
       username: `[${proper(message.event)}]: ${message.name}`,
       avatar_url: avatars[message.event] || "",
       embeds: [
         {
-          author: { name: `PM2 Logs`, icon_url: `https://cdn.discordapp.com/emojis/815679520296271943.png` },
+          author: { name: `PM2 Logs`, icon_url: cdn(`815679520296271943`) },
           title: proper(message.event),
           description,
           color: colors[message.event] || 0x64acf3,
@@ -166,7 +117,7 @@ function bufferMessage() {
 function processQueue() {
 
   // If we have a message in the message queue, removed it from the queue and send it to discord
-  if (messages.length > 0) {
+  if (messages.length) {
     sendToDiscord(bufferMessage());
   }
 
@@ -190,9 +141,7 @@ function processQueue() {
   }
 
   // Wait 10 seconds and then process the next message in the queue
-  setTimeout(function () {
-    processQueue();
-  }, 10000);
+  setTimeout(() => processQueue(), 10000);
 }
 
 function createMessage(data, eventName, altDescription) {
@@ -202,61 +151,53 @@ function createMessage(data, eventName, altDescription) {
   }
   // if a specific process name was specified then we check to make sure only 
   // that process gets output
-  if (conf.process_name !== null && data.process.name !== conf.process_name) {
-    return;
+  if (conf.process_name) {
+    if (data.process_name !== conf.process_name) {
+      return;
+    }
   }
 
   let msg = altDescription || data.data;
-  if (typeof msg === "object") {
-    msg = JSON.stringify(msg);
-  }
 
   messages.push({
     name: data.process.name,
     event: eventName,
-    description: stripANSI(msg),
+    description: stripANSI(typeof msg === "object" ? JSON.stringify(msg) : msg),
     timestamp: Math.floor(Date.now() / 1000),
   });
 }
 
 // Start listening on the PM2 BUS
-pm2.launchBus(function (err, bus) {
+pm2.launchBus((_, bus) => {
 
   // Listen for process logs
   if (conf.log) {
-    bus.on('log:out', function (data) {
-      createMessage(data, 'log');
-    });
+    bus.on('log:out', (data) => createMessage(data, 'log'));
   }
 
   // Listen for process errors
   if (conf.error) {
-    bus.on('log:err', function (data) {
-      createMessage(data, 'error');
-    });
+    bus.on('log:err', (data) => createMessage(data, 'error'));
   }
 
   // Listen for PM2 kill
   if (conf.kill) {
-    bus.on('pm2:kill', function (data) {
+    bus.on('pm2:kill', (data) =>
       messages.push({
         name: 'PM2',
         event: 'kill',
         description: data.msg,
         timestamp: Math.floor(Date.now() / 1000),
-      });
-    });
+      }));
   }
 
   // Listen for process exceptions
   if (conf.exception) {
-    bus.on('process:exception', function (data) {
-      createMessage(data, 'exception');
-    });
+    bus.on('process:exception', (data) => createMessage(data, 'exception'));
   }
 
   // Listen for PM2 events
-  bus.on('process:event', function (data) {
+  bus.on('process:event', (data) => {
     if (!conf[data.event]) {
       return;
     }
@@ -265,5 +206,4 @@ pm2.launchBus(function (err, bus) {
 
   // Start the message processing
   processQueue();
-
 });
